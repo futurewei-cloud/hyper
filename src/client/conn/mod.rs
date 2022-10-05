@@ -19,7 +19,7 @@
 //! use hyper::client::conn;
 //! use tokio::net::TcpStream;
 //!
-//! #[tokio::main]
+//! #[tokio::main(flavor = "current_thread")]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let target_stream = TcpStream::connect("example.com:80").await?;
 //!
@@ -56,4 +56,3 @@
 pub mod http1;
 #[cfg(feature = "http2")]
 pub mod http2;
-

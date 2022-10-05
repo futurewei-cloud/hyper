@@ -31,17 +31,18 @@ http-body = { git = "https://github.com/hyperium/http-body", rev = "6d7dd17" }
 http-body-util = { git = "https://github.com/hyperium/http-body", rev = "6d7dd17" }
 httpdate = "1.0"
 httparse = "1.6"
-h2 = { version = "0.3.9", optional = true }
+# h2 = { git = "https://github.com/futurewei-cloud/h2", branch = "wasmdev", optional = true }
+h2 = { path = "../h2", optional = true }
 itoa = "1"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 pin-project-lite = "0.2.4"
-tokio = { version = "1", features = ["sync"] }
+# tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["sync"] }
+tokio = { path = "../tokio/tokio", features = ["sync"] }
 want = "0.3"
 
 # Optional
 
 libc = { version = "0.2", optional = true }
-socket2 = { version = "0.4", optional = true }
 
 [dev-dependencies]
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
@@ -51,20 +52,32 @@ pretty_env_logger = "0.4"
 spmc = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = [
+# tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = [
+#     "fs",
+#     "macros",
+#     "net",
+#     "io-std",
+#     "io-util",
+#     "rt",
+#     "sync",
+#     "time",
+#     "test-util",
+# ] }
+# tokio-test = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev" }
+# tokio-util = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["codec"] }
+tokio = { path = "../tokio/tokio", features = [
     "fs",
     "macros",
     "net",
     "io-std",
     "io-util",
     "rt",
-    "rt-multi-thread", # so examples can use #[tokio::main]
     "sync",
     "time",
     "test-util",
 ] }
-tokio-test = "0.4"
-tokio-util = { version = "0.7", features = ["codec"] }
+tokio-test = { path = "../tokio/tokio-test" }
+tokio-util = { path = "../tokio/tokio-util", features = ["codec"] }
 url = "2.2"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dev-dependencies]

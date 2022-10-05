@@ -4,7 +4,7 @@ use hyper::{server::conn::Http, service::service_fn};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
 

@@ -12,7 +12,7 @@ use hyper::{server::conn::Http, service::service_fn};
 use hyper::{Error, Response};
 use tokio::net::TcpListener;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
 

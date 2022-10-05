@@ -532,7 +532,7 @@
 
   `hyper::rt::spawn` usage should be replaced with `tokio::task::spawn`.
 
-  `hyper::rt::run` usage should be replaced with `#[tokio::main]` or
+  `hyper::rt::run` usage should be replaced with `#[tokio::main(flavor = "current_thread")]` or
   managing a `tokio::runtime::Runtime` manually.
 
  ([6ae5889f](https://github.com/hyperium/hyper/commit/6ae5889f8378b6454d4dc620f33bd1678d0e00e4))

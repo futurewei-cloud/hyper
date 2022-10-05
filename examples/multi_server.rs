@@ -22,7 +22,7 @@ async fn index2(_: Request<Recv>) -> Result<Response<Full<Bytes>>, hyper::Error>
     Ok(Response::new(Full::new(Bytes::from(INDEX2))))
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     pretty_env_logger::init();
 

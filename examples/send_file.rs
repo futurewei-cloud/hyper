@@ -1,8 +1,6 @@
 #![deny(warnings)]
 
-use tokio::fs::File;
-
-use tokio_util::codec::{BytesCodec, FramedRead};
+use std::io::Read;
 
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Result, Server, StatusCode};
@@ -10,7 +8,7 @@ use hyper::{Body, Method, Request, Response, Result, Server, StatusCode};
 static INDEX: &str = "examples/send_file_index.html";
 static NOTFOUND: &[u8] = b"Not Found";
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     pretty_env_logger::init();
 
@@ -50,10 +48,11 @@ fn not_found() -> Response<Body> {
 async fn simple_file_send(filename: &str) -> Result<Response<Body>> {
     // Serve a file by asynchronously reading it by chunks using tokio-util crate.
 
-    if let Ok(file) = File::open(filename).await {
-        let stream = FramedRead::new(file, BytesCodec::new());
-        let body = Body::wrap_stream(stream);
-        return Ok(Response::new(body));
+    if let Ok(mut file) = std::fs::File::open(filename) {
+        let mut content = vec![];
+        if let Ok(_) = file.read_to_end(&mut content) {
+            return Ok(Response::new(Body::from(content)));
+        }
     }
 
     Ok(not_found())

@@ -3,7 +3,7 @@ use std::io;
 use std::net::{SocketAddr, TcpListener as StdTcpListener};
 use std::time::Duration;
 
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::time::Sleep;
 use tracing::{debug, error, trace};
 
@@ -108,18 +108,7 @@ impl AddrIncoming {
         loop {
             match ready!(self.listener.poll_accept(cx)) {
                 Ok((socket, remote_addr)) => {
-                    if let Some(dur) = self.tcp_keepalive_timeout {
-                        let socket = socket2::SockRef::from(&socket);
-                        let conf = socket2::TcpKeepalive::new().with_time(dur);
-                        if let Err(e) = socket.set_tcp_keepalive(&conf) {
-                            trace!("error trying to set TCP keepalive: {}", e);
-                        }
-                    }
-                    if let Err(e) = socket.set_nodelay(self.tcp_nodelay) {
-                        trace!("error trying to set TCP nodelay: {}", e);
-                    }
-                    let local_addr = socket.local_addr()?;
-                    return Poll::Ready(Ok(AddrStream::new(socket, remote_addr, local_addr)));
+                    return self.accept_stream(socket, remote_addr);
                 }
                 Err(e) => {
                     // Connection errors can be ignored directly, continue by
@@ -151,6 +140,53 @@ impl AddrIncoming {
                 }
             }
         }
+    }
+
+    #[cfg(not(target_os = "wasi"))]
+    fn accept_stream(
+        &self,
+        socket: TcpStream,
+        remote_addr: SocketAddr,
+    ) -> Poll<io::Result<AddrStream>> {
+        if let Some(dur) = self.tcp_keepalive_timeout {
+            let socket = socket2::SockRef::from(&socket);
+            let conf = socket2::TcpKeepalive::new().with_time(dur);
+            if let Err(e) = socket.set_tcp_keepalive(&conf) {
+                trace!("error trying to set TCP keepalive: {}", e);
+            }
+        }
+        if let Err(e) = socket.set_nodelay(self.tcp_nodelay) {
+            trace!("error trying to set TCP nodelay: {}", e);
+        }
+        let local_addr = socket.local_addr()?;
+        return Poll::Ready(Ok(AddrStream::new(socket, remote_addr, local_addr)));
+    }
+
+    #[cfg(target_os = "wasi")]
+    fn accept_stream(
+        &self,
+        socket: TcpStream,
+        remote_addr: SocketAddr,
+    ) -> Poll<io::Result<AddrStream>> {
+        use merak_evm_agent_wasm_sdk::socket::Socket;
+        use std::os::wasi::io::AsRawFd;
+
+        let raw_fd = socket.as_raw_fd();
+
+        if let Some(dur) = self.tcp_keepalive_timeout {
+            if let Err(e) = Socket::set_keepalive(raw_fd, dur.as_millis() as u32) {
+                trace!("error trying to set TCP keepalive: {}", e);
+            }
+        }
+
+        if let Err(e) = Socket::set_nodelay(raw_fd, self.tcp_nodelay) {
+            trace!("error trying to set TCP nodelay: {}", e);
+        }
+
+        let local_addr_str = Socket::get_local_addr(raw_fd)
+            .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))?;
+        let local_addr = local_addr_str.parse().expect("Unexpected local address!");
+        return Poll::Ready(Ok(AddrStream::new(socket, remote_addr, local_addr)));
     }
 }
 

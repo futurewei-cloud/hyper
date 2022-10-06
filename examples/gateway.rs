@@ -4,7 +4,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Client, Error, Server};
 use std::net::SocketAddr;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     pretty_env_logger::init();
 

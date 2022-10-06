@@ -88,7 +88,7 @@ async fn response_examples(
     }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     pretty_env_logger::init();
 

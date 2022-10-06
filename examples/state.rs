@@ -8,7 +8,7 @@ use std::sync::{
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Error, Response, Server};
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     pretty_env_logger::init();
 

@@ -18,7 +18,7 @@ type HttpClient = Client<hyper::client::HttpConnector>;
 //    $ export https_proxy=http://127.0.0.1:8100
 // 3. send requests
 //    $ curl -i https://www.some_domain.com/
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8100));
 

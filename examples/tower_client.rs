@@ -6,7 +6,7 @@ use hyper::client::service::Connect;
 use hyper::service::Service;
 use hyper::{Body, Request};
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
 

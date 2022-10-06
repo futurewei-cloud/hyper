@@ -117,8 +117,21 @@ impl Service<Name> for GaiResolver {
         Poll::Ready(Ok(()))
     }
 
+    #[cfg(not(target_os = "wasi"))]
     fn call(&mut self, name: Name) -> Self::Future {
-        let blocking = tokio::task::spawn_blocking(move || {
+        let blocking = tokio::task::spawn(async move {
+            debug!("resolving host={:?}", name.host);
+            (&*name.host, 0)
+                .to_socket_addrs()
+                .map(|i| SocketAddrs { iter: i })
+        });
+
+        GaiFuture { inner: blocking }
+    }
+
+    #[cfg(target_os = "wasi")]
+    fn call(&mut self, name: Name) -> Self::Future {
+        let blocking = tokio::task::spawn(async move {
             debug!("resolving host={:?}", name.host);
             (&*name.host, 0)
                 .to_socket_addrs()

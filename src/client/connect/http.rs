@@ -700,17 +700,18 @@ fn connect(
         }
     };
 
-    let addr_str = addr.to_string();
+    let connect_timeout_in_ms = connect_timeout.unwrap_or(Duration::from_secs(2)).as_millis() as u32;
     let connect_options = TcpConnectOptions {
         local_endpoint: "",
         nonblocking: true,
-        connect_timeout_in_ms: connect_timeout.unwrap_or(Duration::ZERO).as_millis() as u32,
+        connect_timeout_in_ms, 
         keep_alive_timeout_in_ms: config.keep_alive_timeout.unwrap_or(Duration::ZERO).as_millis() as u32,
         reuse_address: config.reuse_address,
         send_buffer_size: config.send_buffer_size.unwrap_or(0usize) as u32,
         recv_buffer_size: config.recv_buffer_size.unwrap_or(0usize) as u32,
     };
 
+    let addr_str = addr.to_string();
     Ok(async move {
         let mut connect_options_mut = connect_options;
         let local_endpoint_str = local_endpoint.to_string();

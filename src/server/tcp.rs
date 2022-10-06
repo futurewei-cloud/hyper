@@ -9,6 +9,8 @@ use tracing::{debug, error, trace};
 
 use crate::common::{task, Future, Pin, Poll};
 
+use merak_evm_agent_wasm_sdk::socket::{Socket, TcpBindOptions};
+
 #[allow(unreachable_pub)] // https://github.com/rust-lang/rust/issues/57411
 pub use self::addr_stream::AddrStream;
 use super::accept::Accept;
@@ -25,9 +27,26 @@ pub struct AddrIncoming {
 }
 
 impl AddrIncoming {
+    #[cfg(not(target_os = "wasi"))]
     pub(super) fn new(addr: &SocketAddr) -> crate::Result<Self> {
         let std_listener = StdTcpListener::bind(addr).map_err(crate::Error::new_listen)?;
 
+        AddrIncoming::from_std(std_listener)
+    }
+
+    #[cfg(target_os = "wasi")]
+    pub(super) fn new(addr: &SocketAddr) -> crate::Result<Self> {
+        use std::os::wasi::io::FromRawFd;
+
+        let addr_str = addr.to_string();
+        let bind_options = TcpBindOptions {
+            backlog: 1024,
+            nonblocking: true,
+            reuse_address: true,
+        };
+        let socket = Socket::tcp_bind(&addr_str, bind_options).map_err(crate::Error::new_listen)?;
+        println!("Got socket: {}", socket);
+        let std_listener = unsafe { StdTcpListener::from_raw_fd(socket) };
         AddrIncoming::from_std(std_listener)
     }
 
@@ -108,6 +127,7 @@ impl AddrIncoming {
         loop {
             match ready!(self.listener.poll_accept(cx)) {
                 Ok((socket, remote_addr)) => {
+                    println!("Incoming socket: {:?}, Addr = {:?}", socket, remote_addr);
                     return self.accept_stream(socket, remote_addr);
                 }
                 Err(e) => {
@@ -168,24 +188,33 @@ impl AddrIncoming {
         socket: TcpStream,
         remote_addr: SocketAddr,
     ) -> Poll<io::Result<AddrStream>> {
-        use merak_evm_agent_wasm_sdk::socket::Socket;
         use std::os::wasi::io::AsRawFd;
 
-        let raw_fd = socket.as_raw_fd();
+        // let raw_fd = socket.as_raw_fd();
 
-        if let Some(dur) = self.tcp_keepalive_timeout {
-            if let Err(e) = Socket::set_keepalive(raw_fd, dur.as_millis() as u32) {
-                trace!("error trying to set TCP keepalive: {}", e);
-            }
-        }
+        // if let Some(dur) = self.tcp_keepalive_timeout {
+        //     if let Err(e) = Socket::set_keepalive(raw_fd, dur.as_millis() as u32) {
+        //         trace!("error trying to set TCP keepalive: {}", e);
+        //     }
+        // }
 
-        if let Err(e) = Socket::set_nodelay(raw_fd, self.tcp_nodelay) {
-            trace!("error trying to set TCP nodelay: {}", e);
-        }
+        // if let Err(e) = Socket::set_nodelay(raw_fd, self.tcp_nodelay) {
+        //     trace!("error trying to set TCP nodelay: {}", e);
+        // }
 
-        let local_addr_str = Socket::get_local_addr(raw_fd)
+        // let local_addr_str = Socket::get_local_addr(raw_fd)
+        //     .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))?;
+        // let local_addr = local_addr_str.parse().expect("Unexpected local address!");
+
+        // For connections accepted by WASI, the Raw FD will not match the real FD, but the index in the WASI FD table.
+        // Since we don't have a way to get the underlying FD from the WASI table, there is no way we can get any info
+        // or set any socket options. The only way to move on for now, is to get the local address from listener, and
+        // and leave the remote address as whatever the wasi runtime passed in - all 0s.
+        let listener_fd = self.listener.as_raw_fd();
+        let local_addr_str = Socket::get_local_addr(listener_fd)
             .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))?;
         let local_addr = local_addr_str.parse().expect("Unexpected local address!");
+
         return Poll::Ready(Ok(AddrStream::new(socket, remote_addr, local_addr)));
     }
 }

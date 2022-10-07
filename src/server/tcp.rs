@@ -5,11 +5,11 @@ use std::time::Duration;
 
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::Sleep;
-use tracing::{debug, error, trace};
+use tracing::{debug, error};
 
 use crate::common::{task, Future, Pin, Poll};
 
-use merak_evm_agent_wasm_sdk::socket::{Socket, TcpBindOptions};
+use ingen_wasm_sdk::socket::{Socket, TcpBindOptions};
 
 #[allow(unreachable_pub)] // https://github.com/rust-lang/rust/issues/57411
 pub use self::addr_stream::AddrStream;

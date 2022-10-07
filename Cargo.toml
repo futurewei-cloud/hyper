@@ -28,17 +28,14 @@ http = "0.2"
 http-body = "0.4"
 httpdate = "1.0"
 httparse = "1.6"
-# h2 = { git = "https://github.com/futurewei-cloud/h2", branch = "wasmdev", optional = true }
-h2 = { path = "../h2", optional = true }
+h2 = { git = "https://github.com/futurewei-cloud/h2", branch = "wasmdev", optional = true }
 itoa = "1"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 pin-project-lite = "0.2.4"
 tower-service = "0.3"
-# tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["sync"] }
-tokio = { path = "../tokio/tokio", features = ["sync"] }
+tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["sync"] }
 want = "0.3"
-# merak-evm-agent-wasm-sdk = { git = "https://github.com/futurewei-cloud/merak-evm-agent-api-wit", branch = "main" }
-merak-evm-agent-wasm-sdk = { path = "../../merak-evm-agent-api-wit/wasm_sdk" }
+ingen-wasm-sdk = { git = "https://github.com/futurewei-cloud/merak-evm-agent-sdk", branch = "main" }
 
 # Optional
 
@@ -52,22 +49,10 @@ pretty_env_logger = "0.4"
 spmc = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-# tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = [
-#     "fs",
-#     "macros",
-#     "net",
-#     "io-std",
-#     "io-util",
-#     "rt",
-#     "sync",
-#     "time",
-#     "test-util",
-# ] }
-# tokio-test = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev" }
-# tokio-util = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["codec"] }
-tokio = { path = "../tokio/tokio", features = [
+tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = [
     "fs",
     "macros",
+    "net",
     "io-std",
     "io-util",
     "rt",
@@ -75,8 +60,8 @@ tokio = { path = "../tokio/tokio", features = [
     "time",
     "test-util",
 ] }
-tokio-test = { path = "../tokio/tokio-test" }
-tokio-util = { path = "../tokio/tokio-util", features = ["codec"] }
+tokio-test = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev" }
+tokio-util = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["codec"] }
 # tower = { version = "0.4", features = ["make", "util"] }
 url = "2.2"
 

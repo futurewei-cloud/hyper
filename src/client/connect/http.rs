@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 use std::fmt;
-use std::io;
 use std::future::Future;
+use std::io;
 use std::marker::PhantomData;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::pin::Pin;
@@ -16,7 +16,7 @@ use tokio::net::TcpStream;
 use tokio::time::Sleep;
 use tracing::{debug, trace, warn};
 
-use merak_evm_agent_wasm_sdk::socket::{Socket, TcpConnectOptions};
+use ingen_wasm_sdk::socket::{Socket, TcpConnectOptions};
 
 use super::dns::{self, resolve, GaiResolver, Resolve};
 use super::{Connected, Connection};
@@ -364,7 +364,10 @@ impl Connection for TcpStream {
     fn connected(&self) -> Connected {
         let connected = Connected::new();
         if let (Ok(remote_addr), Ok(local_addr)) = (self.peer_addr(), self.local_addr()) {
-            connected.extra(HttpInfo { remote_addr, local_addr })
+            connected.extra(HttpInfo {
+                remote_addr,
+                local_addr,
+            })
         } else {
             connected
         }
@@ -685,12 +688,8 @@ fn connect(
     use std::os::wasi::io::FromRawFd;
 
     let local_endpoint = match (addr, &config.local_address_ipv4, &config.local_address_ipv6) {
-        (SocketAddr::V4(_), Some(addr), _) => {
-            SocketAddr::new(addr.clone().into(), 0)
-        }
-        (SocketAddr::V6(_), _, Some(addr)) => {
-            SocketAddr::new(addr.clone().into(), 0)
-        }
+        (SocketAddr::V4(_), Some(addr), _) => SocketAddr::new(addr.clone().into(), 0),
+        (SocketAddr::V6(_), _, Some(addr)) => SocketAddr::new(addr.clone().into(), 0),
         _ => {
             let any: SocketAddr = match *addr {
                 SocketAddr::V4(_) => ([0, 0, 0, 0], 0).into(),
@@ -700,12 +699,17 @@ fn connect(
         }
     };
 
-    let connect_timeout_in_ms = connect_timeout.unwrap_or(Duration::from_secs(2)).as_millis() as u32;
+    let connect_timeout_in_ms = connect_timeout
+        .unwrap_or(Duration::from_secs(2))
+        .as_millis() as u32;
     let connect_options = TcpConnectOptions {
         local_endpoint: "",
         nonblocking: true,
-        connect_timeout_in_ms, 
-        keep_alive_timeout_in_ms: config.keep_alive_timeout.unwrap_or(Duration::ZERO).as_millis() as u32,
+        connect_timeout_in_ms,
+        keep_alive_timeout_in_ms: config
+            .keep_alive_timeout
+            .unwrap_or(Duration::ZERO)
+            .as_millis() as u32,
         reuse_address: config.reuse_address,
         send_buffer_size: config.send_buffer_size.unwrap_or(0usize) as u32,
         recv_buffer_size: config.recv_buffer_size.unwrap_or(0usize) as u32,
@@ -720,8 +724,11 @@ fn connect(
             Ok(socket) => {
                 let std_stream = unsafe { std::net::TcpStream::from_raw_fd(socket) };
                 TcpStream::from_std(std_stream)
-            },
-            Err(e) => Err(io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))
+            }
+            Err(e) => Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                e.to_string(),
+            )),
         }
         .map_err(ConnectError::m("Tcp connect failed"))
     })

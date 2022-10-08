@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::Sleep;
-use tracing::{debug, error};
+use tracing::{debug, error, trace};
 
 use crate::common::{task, Future, Pin, Poll};
 
@@ -190,28 +190,19 @@ impl AddrIncoming {
     ) -> Poll<io::Result<AddrStream>> {
         use std::os::wasi::io::AsRawFd;
 
-        // let raw_fd = socket.as_raw_fd();
+        let raw_fd = socket.as_raw_fd();
 
-        // if let Some(dur) = self.tcp_keepalive_timeout {
-        //     if let Err(e) = Socket::set_keepalive(raw_fd, dur.as_millis() as u32) {
-        //         trace!("error trying to set TCP keepalive: {}", e);
-        //     }
-        // }
+        if let Some(dur) = self.tcp_keepalive_timeout {
+            if let Err(e) = Socket::set_keepalive(raw_fd, dur.as_millis() as u32) {
+                trace!("error trying to set TCP keepalive: {}", e);
+            }
+        }
 
-        // if let Err(e) = Socket::set_nodelay(raw_fd, self.tcp_nodelay) {
-        //     trace!("error trying to set TCP nodelay: {}", e);
-        // }
+        if let Err(e) = Socket::set_nodelay(raw_fd, self.tcp_nodelay) {
+            trace!("error trying to set TCP nodelay: {}", e);
+        }
 
-        // let local_addr_str = Socket::get_local_addr(raw_fd)
-        //     .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))?;
-        // let local_addr = local_addr_str.parse().expect("Unexpected local address!");
-
-        // For connections accepted by WASI, the Raw FD will not match the real FD, but the index in the WASI FD table.
-        // Since we don't have a way to get the underlying FD from the WASI table, there is no way we can get any info
-        // or set any socket options. The only way to move on for now, is to get the local address from listener, and
-        // and leave the remote address as whatever the wasi runtime passed in - all 0s.
-        let listener_fd = self.listener.as_raw_fd();
-        let local_addr_str = Socket::get_local_addr(listener_fd)
+        let local_addr_str = Socket::get_local_addr(raw_fd)
             .map_err(|e| io::Error::new(io::ErrorKind::PermissionDenied, e.to_string()))?;
         let local_addr = local_addr_str.parse().expect("Unexpected local address!");
 

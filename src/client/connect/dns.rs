@@ -23,7 +23,7 @@
 //! ```
 use std::error::Error;
 use std::future::Future;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 use std::pin::Pin;
 use std::str::FromStr;
 use std::task::{self, Poll};
@@ -32,6 +32,8 @@ use std::{fmt, io, vec};
 use tokio::task::JoinHandle;
 use tower_service::Service;
 use tracing::debug;
+
+use ingen_wasm_sdk::socket::Socket;
 
 pub(super) use self::sealed::Resolve;
 
@@ -133,9 +135,10 @@ impl Service<Name> for GaiResolver {
     fn call(&mut self, name: Name) -> Self::Future {
         let blocking = tokio::task::spawn(async move {
             debug!("resolving host={:?}", name.host);
-            (&*name.host, 0)
-                .to_socket_addrs()
-                .map(|i| SocketAddrs { iter: i })
+            let nslookup_ips = Socket::nslookup(&*name.host).map_err(|v| io::Error::new(io::ErrorKind::NotFound, v.to_string()))?;
+            let parsed_nslookup_ips = nslookup_ips.into_iter().map(|v| v.parse::<IpAddr>().unwrap()).collect::<Vec<IpAddr>>();
+            let parsed_nslookup_addrs = parsed_nslookup_ips.into_iter().map(|v| SocketAddr::new(v, 0)).collect::<Vec<SocketAddr>>();
+            Ok(SocketAddrs { iter: parsed_nslookup_addrs.into_iter() })
         });
 
         GaiFuture { inner: blocking }

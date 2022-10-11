@@ -35,7 +35,7 @@ pin-project-lite = "0.2.4"
 tower-service = "0.3"
 tokio = { git = "https://github.com/futurewei-cloud/tokio", branch = "wasmdev", features = ["sync"] }
 want = "0.3"
-ingen-wasm-sdk = { git = "https://github.com/futurewei-cloud/merak-evm-agent-sdk", branch = "main" }
+ingen-wasm-sdk = { git = "https://github.com/futurewei-cloud/ingen-sdk", branch = "main" }
 
 # Optional
 

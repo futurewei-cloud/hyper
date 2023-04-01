@@ -1,3 +1,5 @@
+"This Project has been archived by the owner, who is no longer providing support.  The project remains available to authorized users on a "read only" basis."
+
 # [hyper](https://hyper.rs)
 
 [![crates.io](https://img.shields.io/crates/v/hyper.svg)](https://crates.io/crates/hyper)
